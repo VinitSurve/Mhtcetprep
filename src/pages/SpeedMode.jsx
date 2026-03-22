@@ -97,9 +97,7 @@ export default function SpeedMode() {
         total_time:      SPEED_QUESTIONS * TIME_PER_Q,
         mode:            'speed',
       }, user.id);
-    } catch (e) {
-      console.error('Save error:', e);
-    }
+    } catch (_) {}
     setPhase('result');
   };
 

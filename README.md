@@ -159,6 +159,59 @@ The `vercel.json` handles SPA routing, PWA service-worker headers, and security 
 
 ---
 
+## ✅ Pre-Launch Validation (One-Pass)
+
+### 1) RLS verification
+
+1. Run [docs/security/rls-verification.sql](docs/security/rls-verification.sql) in Supabase SQL Editor.
+2. Follow [docs/security/rls-checklist.md](docs/security/rls-checklist.md) API isolation tests with two users.
+3. Confirm cross-user read/write attempts are denied.
+
+### 2) Load testing with k6
+
+Install k6 on your machine and verify:
+
+```bash
+k6 version
+```
+
+Web smoke:
+
+```bash
+BASE_URL=https://your-staging-domain npm run load:smoke
+```
+
+Web peak profile (200 sustained + 400 spike):
+
+```bash
+BASE_URL=https://your-staging-domain npm run load:peak
+```
+
+Supabase API profile:
+
+```bash
+SUPABASE_URL=https://your-project-ref.supabase.co \
+SUPABASE_ANON_KEY=your-anon-key \
+TEST_EMAIL=load-test-user@example.com \
+TEST_PASSWORD=your-password \
+npm run load:supabase
+```
+
+Optional write-path stress:
+
+```bash
+SUPABASE_URL=https://your-project-ref.supabase.co \
+SUPABASE_ANON_KEY=your-anon-key \
+TEST_EMAIL=load-test-user@example.com \
+TEST_PASSWORD=your-password \
+ENABLE_WRITES=true TEST_QUESTION_ID=1 \
+npm run load:supabase
+```
+
+Use the go/no-go criteria listed in [docs/security/rls-checklist.md](docs/security/rls-checklist.md).
+
+---
+
 ## 📊 Analytics Dashboard — 10 Sections
 
 1. **KPI Row** — Total attempts, accuracy, avg time, speed ratio, guess rate, confidence, current streak

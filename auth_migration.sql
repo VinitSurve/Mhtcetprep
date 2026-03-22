@@ -26,12 +26,24 @@ ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attempts  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sessions  ENABLE ROW LEVEL SECURITY;
 
+-- Force RLS so table owners do not accidentally bypass row policies.
+ALTER TABLE public.questions FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.attempts  FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.sessions  FORCE ROW LEVEL SECURITY;
+
 -- ── 5. Drop any old open policies ─────────────────────────────
 DROP POLICY IF EXISTS "Public read questions"    ON public.questions;
 DROP POLICY IF EXISTS "Public insert attempts"   ON public.attempts;
 DROP POLICY IF EXISTS "Public read attempts"     ON public.attempts;
 DROP POLICY IF EXISTS "Public insert sessions"   ON public.sessions;
 DROP POLICY IF EXISTS "Public read sessions"     ON public.sessions;
+
+-- Drop current policy names too, so this migration is safely re-runnable.
+DROP POLICY IF EXISTS "Authenticated users can read questions" ON public.questions;
+DROP POLICY IF EXISTS "Users insert own attempts"              ON public.attempts;
+DROP POLICY IF EXISTS "Users read own attempts"                ON public.attempts;
+DROP POLICY IF EXISTS "Users insert own sessions"              ON public.sessions;
+DROP POLICY IF EXISTS "Users read own sessions"                ON public.sessions;
 
 -- ── 6. Questions — authenticated read, no writes from client ──
 CREATE POLICY "Authenticated users can read questions"
@@ -66,7 +78,17 @@ CREATE POLICY "Users read own sessions"
   TO authenticated
   USING (auth.uid() = user_id);
 
--- ── 9. Recreate views to work with RLS ────────────────────────
+-- ── 9. Least-privilege grants (defense in depth) ──────────────
+-- RLS is the primary protection, but explicit grants reduce blast radius.
+REVOKE ALL ON TABLE public.questions FROM anon, authenticated;
+REVOKE ALL ON TABLE public.attempts  FROM anon, authenticated;
+REVOKE ALL ON TABLE public.sessions  FROM anon, authenticated;
+
+GRANT SELECT ON TABLE public.questions TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.attempts TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.sessions TO authenticated;
+
+-- ── 10. Recreate views to work with RLS ───────────────────────
 -- Views run with the security of the calling user, so RLS on
 -- the underlying tables automatically scopes them per user.
 CREATE OR REPLACE VIEW public.topic_performance AS
@@ -91,7 +113,7 @@ SELECT
 FROM public.attempts
 GROUP BY subject;
 
--- ── 10. Rate-limit helper via pg function ─────────────────────
+-- ── 11. Rate-limit helper via pg function ─────────────────────
 -- This function can be called from Edge Functions or RLS policies.
 -- For now it's here as documentation; client-side rate limiting
 -- handles the UI layer.

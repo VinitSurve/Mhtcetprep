@@ -6,11 +6,14 @@ import { registerSW } from 'virtual:pwa-register';
 // Register service worker for PWA offline support
 registerSW({
   onNeedRefresh() {
-    // Optional: show a "New version available" toast
-    console.log('[CETRanker] New version available, refresh to update.');
+    if (import.meta.env.DEV) {
+      console.info('[CETRanker] New version available, refresh to update.');
+    }
   },
   onOfflineReady() {
-    console.log('[CETRanker] App ready to work offline.');
+    if (import.meta.env.DEV) {
+      console.info('[CETRanker] App ready to work offline.');
+    }
   },
 });
 

@@ -136,9 +136,7 @@ export default function Exam() {
         total_time:      timeTaken,
         mode:            'exam',
       }, user.id);
-    } catch (e) {
-      console.error('Failed to save exam:', e);
-    }
+    } catch (_) {}
 
     setResult({ correct, total: questions.length, timeTaken, subjectBreakdown });
     setPhase('result');

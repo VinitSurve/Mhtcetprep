@@ -116,7 +116,7 @@ export default function Practice() {
         error_type: errorType, session_id: sessionIdRef.current,
       }, user.id);
       if (isAdaptive) adaptiveCache.current = null;
-    } catch (e) { console.error('Failed to save attempt:', e); }
+    } catch (_) {}
   };
 
   const handleEndSession = async () => {

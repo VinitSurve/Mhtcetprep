@@ -5,7 +5,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:deps": "npm ls --depth=0",
+    "security:baseline": "npm run build && npm run security:audit",
+    "load:smoke": "k6 run load-tests/k6/smoke.js",
+    "load:peak": "k6 run load-tests/k6/app-peak.js",
+    "load:supabase": "k6 run load-tests/k6/supabase-api.js",
+    "rls:sql": "echo Run docs/security/rls-verification.sql in Supabase SQL Editor"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",

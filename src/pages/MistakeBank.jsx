@@ -61,7 +61,7 @@ export default function MistakeBank() {
         error_type:        errorType,
         session_id:        sessionId.current,
       }, user.id);
-    } catch (e) { console.error(e); }
+    } catch (_) {}
   };
 
   const handleNext = () => {

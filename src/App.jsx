@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider }   from './contexts/AuthContext';
 import ProtectedRoute     from './components/ProtectedRoute';
+import ErrorBoundary      from './components/ErrorBoundary';
 import Login        from './pages/Login';
 import Home         from './pages/Home';
 import Practice     from './pages/Practice';
@@ -18,23 +19,25 @@ function PrivateRoute({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public */}
-          <Route path="/login" element={<Login />} />
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
 
-          {/* Protected */}
-          <Route path="/"          element={<PrivateRoute><Home /></PrivateRoute>} />
-          <Route path="/practice"  element={<PrivateRoute><Practice /></PrivateRoute>} />
-          <Route path="/exam"      element={<PrivateRoute><Exam /></PrivateRoute>} />
-          <Route path="/speed"     element={<PrivateRoute><SpeedMode /></PrivateRoute>} />
-          <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
-          <Route path="/mistakes"  element={<PrivateRoute><MistakeBank /></PrivateRoute>} />
-          <Route path="/highfreq"  element={<PrivateRoute><HighFreq /></PrivateRoute>} />
+            {/* Protected */}
+            <Route path="/"          element={<PrivateRoute><Home /></PrivateRoute>} />
+            <Route path="/practice"  element={<PrivateRoute><Practice /></PrivateRoute>} />
+            <Route path="/exam"      element={<PrivateRoute><Exam /></PrivateRoute>} />
+            <Route path="/speed"     element={<PrivateRoute><SpeedMode /></PrivateRoute>} />
+            <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+            <Route path="/mistakes"  element={<PrivateRoute><MistakeBank /></PrivateRoute>} />
+            <Route path="/highfreq"  element={<PrivateRoute><HighFreq /></PrivateRoute>} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

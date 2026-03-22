@@ -91,7 +91,6 @@ export async function insertAttemptsBatch(attempts, userId) {
   const payloads = attempts.map(a => ({ ...a, user_id: userId }));
   const { data, error } = await supabase.from('attempts').insert(payloads).select();
   if (error) {
-    console.warn('Batch insert failed, going sequential:', error.message);
     const results = [];
     for (const a of payloads) {
       try {
