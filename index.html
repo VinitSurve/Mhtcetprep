@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="description" content="CETRanker – Adaptive practice system for MAH MCA CET rank improvement" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+  <!-- Google Fonts: Syne (display) + JetBrains Mono (data) + Inter Tight (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            body: ['Inter Tight', 'sans-serif'],
+          },
+          colors: {
+            cet: {
+              bg:     '#0f1117',
+              panel:  '#161b27',
+              border: '#1e2535',
+              accent: '#f59e0b',
+              green:  '#10b981',
+              red:    '#ef4444',
+              yellow: '#f59e0b',
+              blue:   '#3b82f6',
+              muted:  '#4b5563',
+              text:   '#e2e8f0',
+              dim:    '#94a3b8',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.4s cubic-bezier(0.16,1,0.3,1)',
+            'pulse-slow': 'pulse 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+            slideUp: { from: { opacity: 0, transform: 'translateY(16px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0f1117;
+      color: #e2e8f0;
+      font-family: 'Inter Tight', sans-serif;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0f1117; }
+    ::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 4px; }
+    .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+    .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .no-select { user-select: none; }
+  </style>
+
+  <title>CETRanker – MAH MCA CET Practice System</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
