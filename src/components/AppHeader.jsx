@@ -21,22 +21,29 @@ export default function AppHeader({ title, subtitle }) {
     <header className="border-b border-cet-border px-6 py-4 sticky top-0 z-20 bg-cet-bg/95 backdrop-blur-sm">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         {/* Branding / title */}
-        <div>
-          {title ? (
-            <>
-              <h1 className="font-display text-lg font-bold text-cet-text">{title}</h1>
-              {subtitle && <p className="text-xs text-cet-dim font-mono">{subtitle}</p>}
-            </>
-          ) : (
-            <>
-              <h1
-                className="font-display text-xl font-bold text-cet-text tracking-tight cursor-pointer"
-                onClick={() => navigate('/')}>
-                CET<span className="text-cet-accent">Ranker</span>
-              </h1>
-              <p className="text-xs text-cet-dim font-mono">MAH MCA CET · Rank Improvement System</p>
-            </>
-          )}
+        <div className="flex items-center gap-3 min-w-0">
+          <img
+            src="/logo.png"
+            alt="MHT CET Prep"
+            className="w-9 h-9 rounded-lg object-cover border border-cet-border"
+          />
+          <div className="min-w-0">
+            {title ? (
+              <>
+                <h1 className="font-display text-lg font-bold text-cet-text truncate">{title}</h1>
+                {subtitle && <p className="text-xs text-cet-dim font-mono truncate">{subtitle}</p>}
+              </>
+            ) : (
+              <>
+                <h1
+                  className="font-display text-xl font-bold text-cet-text tracking-tight cursor-pointer"
+                  onClick={() => navigate('/')}>
+                  CET<span className="text-cet-accent">Ranker</span>
+                </h1>
+                <p className="text-xs text-cet-dim font-mono">MAH MCA CET · Rank Improvement System</p>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Right side */}
