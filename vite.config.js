@@ -26,6 +26,22 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/questions.*(formula|concept|topic).*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'formula-mode-cache',
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 6 }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/attempts.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'revision-signals-cache',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 30 }
+            }
+          },
+          {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {

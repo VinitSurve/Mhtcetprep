@@ -10,6 +10,7 @@
 ```
 cetranker/
 ├── auth_migration.sql          ← Run this AFTER schema.sql (adds auth + RLS)
+├── learning_modes_migration.sql← Run after auth migration (formula/mastery/revision)
 ├── schema.sql                  ← Base tables, indexes, views
 ├── all_300_questions.sql       ← 300 real MAH MCA CET PYQs (2023–2025)
 ├── .env.example
@@ -78,6 +79,15 @@ Adds `user_id` to `attempts` and `sessions`, drops open policies, creates per-us
 Paste → all_300_questions.sql → Run
 ```
 Inserts 300 real MAH MCA CET questions from 2023, 2024, and 2025 solved papers.
+
+**2d. Enable learning-mode schema**
+```
+Paste → learning_modes_migration.sql → Run
+```
+Adds:
+- `questions.formula`, `questions.concept`
+- `sessions.subject` with backfill + NOT NULL
+- `formula_progress` table with RLS + least-privilege grants
 
 Verify:
 ```sql
@@ -224,6 +234,28 @@ Use the go/no-go criteria listed in [docs/security/rls-checklist.md](docs/securi
 8. **Hourly Activity Heatmap** — 24-hour grid coloured by accuracy
 9. **Topic Coverage** — How many of the 66 known topics you've attempted, broken down by subject
 10. **Full Topic Table** — Sortable by accuracy, with Weak / Improving / Strong badges
+
+---
+
+## 🧠 New High-Impact Modes
+
+1. **Formula → Application Mode** (`/formula`)
+- Shows concept + formula card first
+- Runs 1–3 targeted questions per formula
+- Stores attempts and updates `formula_progress`
+
+2. **Subject Mastery Mode** (`/mastery`)
+- 50-question subject-focused sessions
+- Weak topics are weighted higher using recent attempt history
+- Session summary includes accuracy, average time, weak topics
+
+3. **Smart Revision Engine** (`/revision`)
+- Builds daily set from wrong + slow + low-confidence attempts
+- Deduplicates and tags reason per question
+- Adaptive set size between 10 and 20
+
+4. **Formula Analytics** (`/formula-analytics`)
+- Formula-level accuracy and weakest-formula tracking
 
 ---
 

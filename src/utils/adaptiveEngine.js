@@ -360,3 +360,153 @@ export function buildWeeklyVolume(attempts) {
     };
   });
 }
+
+// ── Formula → Application mode helpers ─────────────────────────
+
+export function groupQuestionsByFormula(questions) {
+  const map = new Map();
+  for (const q of questions || []) {
+    if (!q.formula) continue;
+    const key = `${q.formula}::${q.topic}`;
+    const curr = map.get(key) || {
+      formula: q.formula,
+      concept: q.concept || 'Concept',
+      topic: q.topic,
+      subject: q.subject,
+      questions: [],
+    };
+    curr.questions.push(q);
+    map.set(key, curr);
+  }
+  return Array.from(map.values());
+}
+
+export function getWeakFormulas(progressRows, limit = 8) {
+  return [...(progressRows || [])]
+    .map((p) => ({
+      formula: p.formula,
+      topic: p.topic,
+      attempts: p.attempts || 0,
+      accuracy: p.attempts > 0 ? ((p.correct || 0) / p.attempts) * 100 : 0,
+      avgTime: p.avg_time || 0,
+      last_practiced: p.last_practiced,
+    }))
+    .sort((a, b) => {
+      if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
+      return b.avgTime - a.avgTime;
+    })
+    .slice(0, limit);
+}
+
+export function buildFormulaPerformance(attemptRows) {
+  const map = {};
+  for (const row of attemptRows || []) {
+    const rel = row.questions;
+    const formula = rel?.formula;
+    if (!formula) continue;
+    if (!map[formula]) {
+      map[formula] = {
+        formula,
+        concept: rel.concept || 'Concept',
+        topic: rel.topic,
+        subject: rel.subject,
+        correct: 0,
+        total: 0,
+        totalTime: 0,
+      };
+    }
+    map[formula].total += 1;
+    map[formula].totalTime += row.time_taken_sec || 0;
+    if (row.is_correct) map[formula].correct += 1;
+  }
+  return Object.values(map).map((f) => ({
+    ...f,
+    accuracy: f.total ? parseFloat(((f.correct / f.total) * 100).toFixed(1)) : 0,
+    avgTime: f.total ? Math.round(f.totalTime / f.total) : 0,
+  }));
+}
+
+// ── Subject Mastery helpers ────────────────────────────────────
+
+export function buildSubjectMasteryPool(questions, attempts, subject) {
+  const all = (questions || []).filter((q) => q.subject === subject);
+  if (!all.length) return [];
+
+  const byTopic = {};
+  for (const a of attempts || []) {
+    if (a.subject !== subject) continue;
+    if (!byTopic[a.topic]) byTopic[a.topic] = { total: 0, correct: 0 };
+    byTopic[a.topic].total += 1;
+    if (a.is_correct) byTopic[a.topic].correct += 1;
+  }
+
+  const weighted = [];
+  for (const q of all) {
+    const t = byTopic[q.topic] || { total: 0, correct: 0 };
+    const accuracy = t.total ? (t.correct / t.total) * 100 : 0;
+    const weight = accuracy < 50 ? 4 : accuracy < 70 ? 3 : accuracy < 85 ? 2 : 1;
+    for (let i = 0; i < weight; i++) weighted.push(q);
+  }
+  return weighted;
+}
+
+export function buildSubjectMasteryScore(attempts) {
+  const { subjectStats } = analyzeAttempts(attempts || []);
+  return subjectStats
+    .map((s) => ({
+      subject: s.subject,
+      readiness: Math.round(Math.max(0, Math.min(100, s.accuracy))),
+      avgTime: Math.round(s.avgTime || 0),
+      total: s.total,
+    }))
+    .sort((a, b) => b.readiness - a.readiness);
+}
+
+// ── Smart Revision helpers ─────────────────────────────────────
+
+export function generateRevisionSet({ wrongRows = [], slowRows = [], lowConfRows = [] }, minSize = 10, maxSize = 20) {
+  const reasonPriority = {
+    wrong: 3,
+    slow: 2,
+    low_confidence: 1,
+  };
+
+  const map = new Map();
+
+  const mergeWithReason = (rows, reason) => {
+    for (const row of rows || []) {
+      const qid = row.question_id;
+      if (!qid) continue;
+      const existing = map.get(qid) || {
+        question_id: qid,
+        reasons: [],
+        priority: 0,
+        topic: row.topic,
+        subject: row.subject,
+        created_at: row.created_at,
+      };
+      if (!existing.reasons.includes(reason)) existing.reasons.push(reason);
+      existing.priority = Math.max(existing.priority, reasonPriority[reason]);
+      if (!existing.created_at || (row.created_at && row.created_at > existing.created_at)) {
+        existing.created_at = row.created_at;
+      }
+      map.set(qid, existing);
+    }
+  };
+
+  mergeWithReason(wrongRows, 'wrong');
+  mergeWithReason(slowRows, 'slow');
+  mergeWithReason(lowConfRows, 'low_confidence');
+
+  const merged = Array.from(map.values()).sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    return (b.created_at || '').localeCompare(a.created_at || '');
+  });
+
+  const adaptiveSize = Math.max(
+    minSize,
+    Math.min(maxSize, Math.ceil(merged.length * 0.5))
+  );
+
+  return merged.slice(0, adaptiveSize);
+}

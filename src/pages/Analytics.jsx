@@ -12,6 +12,7 @@ import {
   buildDifficultyStats, buildSpeedAccuracyMatrix, buildStreakData,
   buildHourlyHeatmap, buildTopicCoverage, predictScore, buildWeeklyVolume,
   findStrongestTopic, findWeakestTopic, findSlowestTopic,
+  buildSubjectMasteryScore,
 } from '../utils/adaptiveEngine';
 import { accuracyColor, subjectColor } from '../utils/helpers';
 import AppHeader from '../components/AppHeader';
@@ -66,6 +67,7 @@ export default function Analytics() {
   const [heatmap, setHeatmap]           = useState([]);
   const [coverage, setCoverage]         = useState(null);
   const [prediction, setPrediction]     = useState(null);
+  const [masteryScores, setMasteryScores] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -87,6 +89,7 @@ export default function Analytics() {
         setHeatmap(buildHourlyHeatmap(data));
         setCoverage(buildTopicCoverage(data));
         setPrediction(predictScore(data));
+        setMasteryScores(buildSubjectMasteryScore(data));
       } catch (e) {
         setError(e.message);
       } finally {
@@ -156,6 +159,14 @@ export default function Analytics() {
 
         {!isEmpty && (
           <>
+            <div className="flex justify-end">
+              <button
+                onClick={() => navigate('/formula-analytics')}
+                className="text-xs font-mono px-3 py-1.5 rounded-lg border border-cet-border text-cet-dim hover:text-cet-text hover:border-cet-accent/40">
+                Formula Analytics →
+              </button>
+            </div>
+
             {/* ── Predicted CET Score ── */}
             {prediction && (
               <div className="bg-gradient-to-r from-cet-accent/10 to-cet-blue/10 border border-cet-accent/30 rounded-xl p-5">
@@ -270,6 +281,27 @@ export default function Analytics() {
                       <div className="w-14 text-right font-mono text-xs text-cet-muted shrink-0">
                         {s.correct}/{s.total}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {masteryScores.length > 0 && (
+              <Section title="Subject Mastery Score">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {masteryScores.map((s) => (
+                    <div key={s.subject} className="p-4 rounded-lg bg-cet-bg border border-cet-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-display font-bold text-cet-text">{s.subject}</div>
+                        <span className={`text-xs font-mono px-2 py-0.5 rounded ${s.readiness >= 80 ? 'bg-cet-green/15 text-cet-green' : s.readiness >= 60 ? 'bg-cet-yellow/15 text-cet-yellow' : 'bg-cet-red/15 text-cet-red'}`}>
+                          {s.readiness}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-cet-border rounded-full overflow-hidden mb-2">
+                        <div className="h-full rounded-full" style={{ width: `${s.readiness}%`, backgroundColor: subjectColor(s.subject) }} />
+                      </div>
+                      <div className="text-xs font-mono text-cet-dim">{s.total} attempts · avg {s.avgTime}s</div>
                     </div>
                   ))}
                 </div>

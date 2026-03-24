@@ -135,6 +135,7 @@ export default function Exam() {
         correct_answers: correct,
         total_time:      timeTaken,
         mode:            'exam',
+        subject:         subjectFilter || 'General Aptitude',
       }, user.id);
     } catch (_) {}
 

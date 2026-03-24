@@ -96,6 +96,7 @@ export default function SpeedMode() {
         correct_answers: correct,
         total_time:      SPEED_QUESTIONS * TIME_PER_Q,
         mode:            'speed',
+        subject:         'General Aptitude',
       }, user.id);
     } catch (_) {}
     setPhase('result');

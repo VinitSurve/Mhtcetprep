@@ -73,6 +73,7 @@ export default function MistakeBank() {
         correct_answers: correct,
         total_time:      0,
         mode:            'mistake',
+        subject:         questions[0]?.subject || 'General Aptitude',
       }, user.id).catch(() => {});
       setPhase('result');
       return;

@@ -72,6 +72,7 @@ export default function HighFreq() {
         correct_answers: correct,
         total_time: 0,
         mode: 'highfreq',
+        subject: questions[0]?.subject || 'General Aptitude',
       }, user.id).catch(() => {});
       setPhase('result');
       return;

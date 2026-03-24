@@ -12,6 +12,9 @@ const MODES = [
   { id:'adaptive', title:'Adaptive Mode',    subtitle:'Auto-targets your weak topics from past attempts',icon:'🧠',path:'/practice?mode=adaptive',accent:'#a855f7', tag:'Rank Boost'       },
   { id:'mistakes', title:'Mistake Bank',     subtitle:'Reattempt questions you got wrong',              icon:'🔁', path:'/mistakes',             accent:'#10b981', tag:'Error Fix'          },
   { id:'highfreq', title:'PYQ Mode',         subtitle:'Real questions from 2023 · 2024 · 2025 papers', icon:'🔥', path:'/highfreq',             accent:'#f97316', tag:'300 PYQs'           },
+  { id:'formula',  title:'Formula → Application', subtitle:'Learn concept, apply formula, solve targeted drills', icon:'📐', path:'/formula', accent:'#3b82f6', tag:'Concept to Solve' },
+  { id:'mastery',  title:'Subject Mastery',  subtitle:'50-question focused session with weak-topic bias', icon:'📚', path:'/mastery', accent:'#a855f7', tag:'Exam Ready' },
+  { id:'revision', title:'Smart Revision',   subtitle:'Daily set from wrong, slow, and low-confidence questions', icon:'🧩', path:'/revision', accent:'#14b8a6', tag:'Daily 10-20' },
 ];
 
 export default function Home() {

@@ -10,6 +10,10 @@ import SpeedMode    from './pages/SpeedMode';
 import Analytics    from './pages/Analytics';
 import MistakeBank  from './pages/MistakeBank';
 import HighFreq     from './pages/HighFreq';
+import FormulaMode  from './pages/FormulaMode';
+import SubjectMastery from './pages/SubjectMastery';
+import Revision from './pages/Revision';
+import FormulaAnalytics from './pages/FormulaAnalytics';
 import NotFound     from './pages/NotFound';
 
 function PrivateRoute({ children }) {
@@ -33,6 +37,10 @@ export default function App() {
             <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
             <Route path="/mistakes"  element={<PrivateRoute><MistakeBank /></PrivateRoute>} />
             <Route path="/highfreq"  element={<PrivateRoute><HighFreq /></PrivateRoute>} />
+            <Route path="/formula"   element={<PrivateRoute><FormulaMode /></PrivateRoute>} />
+            <Route path="/mastery"   element={<PrivateRoute><SubjectMastery /></PrivateRoute>} />
+            <Route path="/revision"  element={<PrivateRoute><Revision /></PrivateRoute>} />
+            <Route path="/formula-analytics" element={<PrivateRoute><FormulaAnalytics /></PrivateRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -127,6 +127,7 @@ export default function Practice() {
         correct_answers: sessionStats.correct,
         total_time:      sessionStats.time,
         mode:            isAdaptive ? 'adaptive' : 'practice',
+        subject:         subjectFilter || 'General Aptitude',
       }, user.id).catch(() => {});
     }
     navigate('/');

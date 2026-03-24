@@ -45,6 +45,7 @@ Pass conditions:
 - users read own attempts
 - users insert own sessions
 - users read own sessions
+- users insert/read/update own formula progress
 3. `user_id` exists on `attempts` and `sessions`, and both user_id indexes exist.
 4. Query 4b in [docs/security/rls-verification.sql](docs/security/rls-verification.sql) returns zero rows.
 
