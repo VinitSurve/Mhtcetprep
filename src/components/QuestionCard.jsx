@@ -26,6 +26,12 @@ export default function QuestionCard({
 
   const opts = question.options || {};
   const keys = Object.keys(opts);
+  const is2023OddFigureQuestion =
+    question.subject === 'Logical Reasoning' &&
+    question.topic === 'Odd One Out' &&
+    (question.question_subtype || '').toLowerCase().includes('figure') &&
+    (question.question || '').trim().toLowerCase() === 'select the odd figure from the given alternatives.';
+  const questionImageSrc = question.image_url || (is2023OddFigureQuestion ? '/image.png' : null);
 
   const getOptionClass = (key) => {
     const base = 'w-full text-left px-4 py-3 rounded-lg border text-sm font-body transition-all duration-200 ';
@@ -97,6 +103,17 @@ export default function QuestionCard({
       <div className="text-cet-text text-base leading-relaxed mb-6 font-body">
         {question.question}
       </div>
+
+      {questionImageSrc && (
+        <div className="mb-6">
+          <img
+            src={questionImageSrc}
+            alt="Question figure"
+            className="w-full max-h-72 object-contain rounded-lg border border-cet-border bg-cet-bg"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       {/* Options */}
       <div className="space-y-2">
