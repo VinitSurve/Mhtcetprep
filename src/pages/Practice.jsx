@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import Timer from '../components/Timer';
+import useAdaptiveEngine from '../hooks/useAdaptiveEngine';
 import { useAuth } from '../contexts/AuthContext';
 import {
   fetchOneQuestion, insertAttempt,
-  fetchRecentAttempts, insertSession,
+  insertSession,
 } from '../lib/supabase';
-import { getAdaptiveFilter } from '../utils/adaptiveEngine';
 import { generateId, speedColor, speedLabel } from '../utils/helpers';
 
 const SUBJECTS = [
@@ -40,7 +40,11 @@ export default function Practice() {
   const startTimeRef  = useRef(Date.now());
   const sessionIdRef  = useRef(generateId());
   const seenIdsRef    = useRef([]);
-  const adaptiveCache = useRef(null);
+  const { getNextQuestion, updateAfterAttempt, flushPending } = useAdaptiveEngine({
+    userId: user?.id,
+    sessionId: sessionIdRef.current,
+    enabled: isAdaptive,
+  });
 
   const loadQuestion = useCallback(async () => {
     setLoading(true);
@@ -51,17 +55,14 @@ export default function Practice() {
     startTimeRef.current = Date.now();
     setTimerReset(n => n + 1);
     try {
-      let filter = {};
-      if (isAdaptive) {
-        if (!adaptiveCache.current) {
-          const recent = await fetchRecentAttempts(50);
-          adaptiveCache.current = getAdaptiveFilter(recent);
-        }
-        filter = adaptiveCache.current;
-      } else if (subjectFilter) {
-        filter = { subject: subjectFilter };
+      const q = isAdaptive
+        ? await getNextQuestion({ externalExcludeIds: seenIdsRef.current })
+        : await fetchOneQuestion({ ...(subjectFilter ? { subject: subjectFilter } : {}), excludeIds: seenIdsRef.current });
+
+      if (!q) {
+        throw new Error('No adaptive question found. Please retry.');
       }
-      const q = await fetchOneQuestion({ ...filter, excludeIds: seenIdsRef.current });
+
       seenIdsRef.current.push(q.id);
       if (seenIdsRef.current.length >= 290) seenIdsRef.current = [];
       setQuestion(q);
@@ -90,6 +91,13 @@ export default function Practice() {
       question_subtype: question.question_subtype, difficulty: question.difficulty,
       was_guess: false, session_id: sessionIdRef.current,
     }, user.id).catch(() => {});
+    if (isAdaptive) {
+      updateAfterAttempt({
+        question,
+        isCorrect: false,
+        timeTakenSec: timeTaken,
+      }).catch(() => {});
+    }
     setSession(s => ({ ...s, total: s.total + 1 }));
     loadQuestion();
   };
@@ -115,7 +123,13 @@ export default function Practice() {
         confidence_level: confidence, was_guess: wasGuess,
         error_type: errorType, session_id: sessionIdRef.current,
       }, user.id);
-      if (isAdaptive) adaptiveCache.current = null;
+      if (isAdaptive) {
+        await updateAfterAttempt({
+          question,
+          isCorrect,
+          timeTakenSec: timeTaken,
+        });
+      }
     } catch (_) {}
   };
 
@@ -130,6 +144,7 @@ export default function Practice() {
         subject:         subjectFilter || 'General Aptitude',
       }, user.id).catch(() => {});
     }
+    if (isAdaptive) await flushPending().catch(() => {});
     navigate('/');
   };
 

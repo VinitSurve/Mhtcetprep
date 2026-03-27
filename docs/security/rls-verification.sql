@@ -11,14 +11,14 @@ FROM pg_tables t
 JOIN pg_class c ON c.relname = t.tablename
 JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = t.schemaname
 WHERE t.schemaname = 'public'
-  AND t.tablename IN ('questions', 'attempts', 'sessions', 'formula_progress')
+  AND t.tablename IN ('questions', 'attempts', 'sessions', 'formula_progress', 'user_tag_performance')
 ORDER BY t.tablename;
 
 -- 2) Confirm expected policies exist
 SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('questions', 'attempts', 'sessions', 'formula_progress')
+  AND tablename IN ('questions', 'attempts', 'sessions', 'formula_progress', 'user_tag_performance')
 ORDER BY tablename, cmd, policyname;
 
 -- 3) Confirm user_id columns exist and are indexed
@@ -43,7 +43,7 @@ ORDER BY tablename, indexname;
 SELECT table_schema, table_name, grantee, privilege_type
 FROM information_schema.role_table_grants
 WHERE table_schema = 'public'
-  AND table_name IN ('questions', 'attempts', 'sessions', 'formula_progress')
+  AND table_name IN ('questions', 'attempts', 'sessions', 'formula_progress', 'user_tag_performance')
   AND grantee IN ('anon', 'authenticated')
 ORDER BY table_name, grantee, privilege_type;
 
@@ -52,11 +52,11 @@ ORDER BY table_name, grantee, privilege_type;
 SELECT table_name, grantee, privilege_type
 FROM information_schema.role_table_grants
 WHERE table_schema = 'public'
-  AND table_name IN ('questions', 'attempts', 'sessions', 'formula_progress')
+  AND table_name IN ('questions', 'attempts', 'sessions', 'formula_progress', 'user_tag_performance')
   AND (
     (grantee = 'anon' AND privilege_type IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')) OR
     (grantee = 'authenticated' AND table_name = 'questions' AND privilege_type <> 'SELECT') OR
-    (grantee = 'authenticated' AND table_name IN ('attempts', 'sessions', 'formula_progress') AND privilege_type NOT IN ('SELECT', 'INSERT', 'UPDATE'))
+    (grantee = 'authenticated' AND table_name IN ('attempts', 'sessions', 'formula_progress', 'user_tag_performance') AND privilege_type NOT IN ('SELECT', 'INSERT', 'UPDATE'))
   )
 ORDER BY table_name, grantee, privilege_type;
 

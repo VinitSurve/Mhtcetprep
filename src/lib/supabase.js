@@ -46,6 +46,27 @@ export async function fetchQuestions({ limit = 10, subject, topic, difficulty, e
   return shuffled.slice(0, limit);
 }
 
+export async function fetchQuestionCandidates({
+  subject,
+  topic,
+  difficulty,
+  excludeIds = [],
+  limit = 180,
+} = {}) {
+  checkRateLimit(fetchLimiter, 'q_candidates', 'adaptive candidate fetches');
+  let query = supabase.from('questions').select('*');
+  if (subject) query = query.eq('subject', subject);
+  if (topic) query = query.eq('topic', topic);
+  if (difficulty) query = query.eq('difficulty', difficulty);
+
+  const safeExclude = [...new Set((excludeIds || []).filter(Boolean))].slice(-150);
+  if (safeExclude.length) query = query.not('id', 'in', `(${safeExclude.join(',')})`);
+
+  const { data, error } = await query.limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 export async function fetchFormulaQuestions({ subject, formula, limit = 120 } = {}) {
   checkRateLimit(fetchLimiter, 'formula_q', 'formula question fetches');
   let query = supabase
@@ -149,6 +170,19 @@ export async function fetchRecentAttempts(limit = 50) {
   const { data, error } = await supabase
     .from('attempts').select('*').order('created_at', { ascending: false }).limit(limit);
   if (error) throw error;
+  return data || [];
+}
+
+export async function upsertUserTagPerformance(rows) {
+  if (!rows || rows.length === 0) return [];
+  checkRateLimit(insertLimiter, 'tag_perf', 'tag performance upserts');
+  const { data, error } = await supabase
+    .from('user_tag_performance')
+    .upsert(rows, { onConflict: 'user_id,tag' })
+    .select();
+
+  // Keep runtime resilient when migration is not yet applied.
+  if (error) return [];
   return data || [];
 }
 

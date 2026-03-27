@@ -22,11 +22,13 @@ export default function AppHeader({ title, subtitle }) {
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         {/* Branding / title */}
         <div className="flex items-center gap-3 min-w-0">
+          <a href={'/'}>
           <img
             src="/logo.png"
             alt="MHT CET Prep"
             className="w-9 h-9 rounded-lg object-cover border border-cet-border"
           />
+          </a>
           <div className="min-w-0">
             {title ? (
               <>
@@ -48,6 +50,12 @@ export default function AppHeader({ title, subtitle }) {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/')}
+            className="hidden sm:block px-3 py-1.5 rounded-lg border border-cet-border text-cet-dim hover:border-cet-accent/50 hover:text-cet-text text-xs font-mono transition-all">
+            Home
+          </button>
+
           <button
             onClick={() => navigate('/analytics')}
             className="hidden sm:block px-3 py-1.5 rounded-lg border border-cet-border text-cet-dim hover:border-cet-accent/50 hover:text-cet-text text-xs font-mono transition-all">
@@ -90,6 +98,11 @@ export default function AppHeader({ title, subtitle }) {
                       <div className="text-xs font-mono text-cet-text truncate">{displayName}</div>
                       <div className="text-xs font-mono text-cet-muted truncate">{user.email}</div>
                     </div>
+                    <button
+                      onClick={() => { setMenuOpen(false); navigate('/'); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-cet-dim hover:text-cet-text hover:bg-cet-border/30 transition-colors font-mono">
+                      🏠 Home
+                    </button>
                     <button
                       onClick={() => { setMenuOpen(false); navigate('/analytics'); }}
                       className="w-full text-left px-4 py-2.5 text-sm text-cet-dim hover:text-cet-text hover:bg-cet-border/30 transition-colors font-mono">

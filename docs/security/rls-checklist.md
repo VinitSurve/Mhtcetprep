@@ -38,7 +38,7 @@ Run [docs/security/rls-verification.sql](docs/security/rls-verification.sql) in 
 
 Pass conditions:
 
-1. `rowsecurity = true` for `questions`, `attempts`, and `sessions`.
+1. `rowsecurity = true` for `questions`, `attempts`, `sessions`, `formula_progress`, and `user_tag_performance`.
 2. Policies include:
 - authenticated read questions
 - users insert own attempts
@@ -46,6 +46,7 @@ Pass conditions:
 - users insert own sessions
 - users read own sessions
 - users insert/read/update own formula progress
+- users insert/read/update own user tag performance
 3. `user_id` exists on `attempts` and `sessions`, and both user_id indexes exist.
 4. Query 4b in [docs/security/rls-verification.sql](docs/security/rls-verification.sql) returns zero rows.
 
