@@ -6,6 +6,7 @@ import {
   Cell, Legend, ReferenceLine,
 } from 'recharts';
 import { fetchAnalytics } from '../lib/supabase';
+import { fetchMockAttemptSummaries } from '../lib/mockTestApi';
 import {
   computeOverallMetrics, analyzeAttempts,
   buildSessionTrend, buildErrorDistribution, buildConfidenceMatrix,
@@ -68,12 +69,15 @@ export default function Analytics() {
   const [coverage, setCoverage]         = useState(null);
   const [prediction, setPrediction]     = useState(null);
   const [masteryScores, setMasteryScores] = useState([]);
+  const [mockAttempts, setMockAttempts] = useState([]);
+  const [mockStats, setMockStats] = useState(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const data = await fetchAnalytics();
+        const mockRows = await fetchMockAttemptSummaries(10);
         const { topicStats: ts, subjectStats: ss } = analyzeAttempts(data);
         setAttempts(data);
         setMetrics(computeOverallMetrics(data));
@@ -90,6 +94,8 @@ export default function Analytics() {
         setCoverage(buildTopicCoverage(data));
         setPrediction(predictScore(data));
         setMasteryScores(buildSubjectMasteryScore(data));
+        setMockAttempts(mockRows || []);
+        setMockStats(buildMockStats(mockRows || []));
       } catch (e) {
         setError(e.message);
       } finally {
@@ -202,6 +208,39 @@ export default function Analytics() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ── Mock Test Analytics ── */}
+            {mockStats && (
+              <Section title="Mock Test Analytics">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  <KPICard label="Tests Taken" value={mockStats.tests} />
+                  <KPICard label="Avg Score" value={mockStats.avgScore.toFixed(1)} color="text-cet-blue" />
+                  <KPICard label="Avg Accuracy" value={`${mockStats.avgAccuracy.toFixed(1)}%`} color={accuracyColor(mockStats.avgAccuracy)} />
+                  <KPICard label="Best Accuracy" value={`${mockStats.bestAccuracy.toFixed(1)}%`} color="text-cet-green" />
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-cet-border">
+                  <div className="grid grid-cols-5 bg-cet-panel text-xs font-mono text-cet-dim px-3 py-2">
+                    <span>Test</span><span className="text-right">Score</span><span className="text-right">Accuracy</span><span className="text-right">Duration</span><span className="text-right">Date</span>
+                  </div>
+                  {mockAttempts.map((m) => {
+                    const acc = m.total_q ? ((m.score || 0) / m.total_q) * 100 : 0;
+                    return (
+                      <div key={m.id} className="grid grid-cols-5 px-3 py-2 text-sm items-center border-t border-cet-border">
+                        <span className="font-mono text-xs text-cet-text truncate">{m.mock_tests?.name || 'Mock Test'}</span>
+                        <span className="text-right font-mono text-xs text-cet-text">{m.score ?? 0}/{m.total_q ?? 0}</span>
+                        <span className={`text-right font-mono text-xs ${accuracyColor(acc)}`}>{acc.toFixed(1)}%</span>
+                        <span className="text-right font-mono text-xs text-cet-dim">{m.mock_tests?.duration_minutes ? `${m.mock_tests.duration_minutes}m` : '—'}</span>
+                        <span className="text-right font-mono text-xs text-cet-dim">{fmtDate(m.start_time)}</span>
+                      </div>
+                    );
+                  })}
+                  {mockAttempts.length === 0 && (
+                    <div className="px-3 py-4 text-xs font-mono text-cet-dim">No mock attempts yet. Complete a mock test to see analytics.</div>
+                  )}
+                </div>
+              </Section>
             )}
 
             {/* ── Highlights Row ── */}
@@ -542,4 +581,24 @@ export default function Analytics() {
       </main>
     </div>
   );
+}
+
+function buildMockStats(rows) {
+  if (!rows.length) return null;
+  const count = rows.length;
+  const sumAcc = rows.reduce((s, r) => s + (r.total_q ? (r.score || 0) / r.total_q : 0), 0);
+  const bestAcc = Math.max(...rows.map(r => (r.total_q ? ((r.score || 0) / r.total_q) * 100 : 0)));
+  const avgAcc = count ? (sumAcc / count) * 100 : 0;
+  const avgScore = count ? rows.reduce((s, r) => s + (r.score || 0), 0) / count : 0;
+  return {
+    tests: count,
+    avgAccuracy: avgAcc,
+    bestAccuracy: bestAcc,
+    avgScore,
+  };
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

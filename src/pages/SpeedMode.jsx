@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QuestionCard from '../components/QuestionCard';
-import { fetchQuestions, insertAttempt, insertSession } from '../lib/supabase';
+import { fetchUnseenQuestions, insertAttempt, insertSession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateId } from '../utils/helpers';
 
@@ -32,14 +32,14 @@ export default function SpeedMode() {
     setPhase('loading');
     setLoadError(null);
     try {
-      const qs = await fetchQuestions({ limit: SPEED_QUESTIONS });
+      const qs = await fetchUnseenQuestions({ userId: user?.id, limit: SPEED_QUESTIONS });
       if (qs.length === 0) throw new Error('No questions found');
       setQuestions(qs);
       setPhase('ready');
     } catch (e) {
       setLoadError(e.message);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => { loadQuestions(); }, [loadQuestions]);
 

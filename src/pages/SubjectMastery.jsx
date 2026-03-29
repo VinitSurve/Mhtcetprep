@@ -5,7 +5,7 @@ import QuestionCard from '../components/QuestionCard';
 import ProgressBar from '../components/ProgressBar';
 import ConfidenceModal from '../components/ConfidenceModal';
 import Timer from '../components/Timer';
-import { fetchQuestions, fetchRecentAttempts, insertAttempt, insertSession } from '../lib/supabase';
+import { fetchRecentAttempts, fetchUnseenQuestions, insertAttempt, insertSession } from '../lib/supabase';
 import { buildSubjectMasteryPool } from '../utils/adaptiveEngine';
 import { generateId } from '../utils/helpers';
 
@@ -62,7 +62,7 @@ export default function SubjectMastery() {
     setError('');
     try {
       const [allSubjectQuestions, recentAttempts] = await Promise.all([
-        fetchQuestions({ limit: 250, subject }),
+        fetchUnseenQuestions({ userId: user?.id, limit: 300, subject }),
         fetchRecentAttempts(500),
       ]);
 

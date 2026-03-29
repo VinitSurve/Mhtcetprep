@@ -35,15 +35,59 @@ export async function fetchOneQuestion({ subject, topic, difficulty, excludeIds 
 
 export async function fetchQuestions({ limit = 10, subject, topic, difficulty, excludeIds = [] } = {}) {
   checkRateLimit(fetchLimiter, 'q_bulk', 'question fetches');
+  const safeExclude = [...new Set((excludeIds || []).filter(Boolean))];
   let query = supabase.from('questions').select('*');
   if (subject)    query = query.eq('subject', subject);
   if (topic)      query = query.eq('topic', topic);
   if (difficulty) query = query.eq('difficulty', difficulty);
-  if (excludeIds.length) query = query.not('id', 'in', `(${excludeIds.slice(-150).join(',')})`);
-  const { data, error } = await query.limit(300);
+  if (safeExclude.length) query = query.not('id', 'in', `(${safeExclude.join(',')})`);
+
+  // Fetch generously so we can slice a clean shuffled subset even with large excludes.
+  const fetchLimit = Math.max(limit * 5, 2000);
+  const { data, error } = await query.limit(fetchLimit);
   if (error) throw error;
   const shuffled = (data || []).sort(() => Math.random() - 0.5);
   return shuffled.slice(0, limit);
+}
+
+export async function fetchUserSeenQuestionIds(userId, limit = 2000) {
+  if (!userId) return [];
+  checkRateLimit(fetchLimiter, 'q_seen', 'question fetches');
+  const { data, error } = await supabase
+    .from('attempts')
+    .select('question_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const seen = new Set();
+  for (const row of data || []) {
+    if (row?.question_id) seen.add(row.question_id);
+  }
+  return Array.from(seen);
+}
+
+function buildUniqueBatch(primary, fallback, limit) {
+  const seen = new Set();
+  const merged = [];
+  for (const row of [...(primary || []), ...(fallback || [])]) {
+    if (!row || seen.has(row.id)) continue;
+    seen.add(row.id);
+    merged.push(row);
+    if (merged.length >= limit) break;
+  }
+  return merged.slice(0, limit);
+}
+
+export async function fetchUnseenQuestions({ userId, limit = 10, subject, topic, difficulty } = {}) {
+  const seenIds = await fetchUserSeenQuestionIds(userId, Math.max(limit * 50, 5000));
+  const unseen = await fetchQuestions({ limit, subject, topic, difficulty, excludeIds: seenIds });
+
+  if (unseen.length >= limit) return unseen;
+
+  // Reset cycle when exhausted: backfill from full pool while preserving uniqueness.
+  const refill = await fetchQuestions({ limit, subject, topic, difficulty, excludeIds: [] });
+  return buildUniqueBatch(unseen, refill, limit);
 }
 
 export async function fetchQuestionCandidates({
@@ -121,20 +165,28 @@ export async function fetchMistakeQuestions(limit = 30) {
   return data || [];
 }
 
-export async function fetchHighFreqQuestions(limit = 100) {
+export async function fetchHighFreqQuestions(limit = 100, excludeIds = []) {
   checkRateLimit(fetchLimiter, 'highfreq', 'question fetches');
+  const safeExclude = [...new Set((excludeIds || []).filter(Boolean))];
   const { data: repeated, error: e1 } = await supabase
     .from('questions').select('*')
     .or('is_repeated.eq.true,frequency_count.gt.1')
-    .order('frequency_count', { ascending: false }).limit(limit);
+    .order('frequency_count', { ascending: false })
+    .limit(limit * 3);
+  if (safeExclude.length) {
+    // apply exclusion client-side after fetch since PostgREST or() with not-in is messy
+  }
   if (e1) throw e1;
-  if ((repeated || []).length >= limit) return repeated;
-  const ids = (repeated || []).map(q => q.id);
-  let fillQ = supabase.from('questions').select('*').limit(limit);
+  const filtered = (repeated || []).filter(q => !safeExclude.includes(q.id));
+  if (filtered.length >= limit) return filtered.slice(0, limit);
+
+  const ids = filtered.map(q => q.id);
+  let fillQ = supabase.from('questions').select('*');
   if (ids.length) fillQ = fillQ.not('id', 'in', `(${ids.join(',')})`);
-  const { data: fill, error: e2 } = await fillQ;
+  if (safeExclude.length) fillQ = fillQ.not('id', 'in', `(${safeExclude.join(',')})`);
+  const { data: fill, error: e2 } = await fillQ.limit(limit * 3);
   if (e2) throw e2;
-  return [...(repeated || []), ...(fill || [])].sort(() => Math.random() - 0.5).slice(0, limit);
+  return [...filtered, ...(fill || [])].sort(() => Math.random() - 0.5).slice(0, limit);
 }
 
 // ── ATTEMPTS (user-scoped, RLS enforced) ──────────────────────

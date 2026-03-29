@@ -3,7 +3,7 @@ import { AuthProvider }   from './contexts/AuthContext';
 import ProtectedRoute     from './components/ProtectedRoute';
 import ErrorBoundary      from './components/ErrorBoundary';
 import Login        from './pages/Login';
-import Home         from './pages/Home';
+import Home         from './pages/Home.jsx';
 import Practice     from './pages/Practice';
 import Exam         from './pages/Exam';
 import SpeedMode    from './pages/SpeedMode';
@@ -41,6 +41,9 @@ export default function App() {
             <Route path="/mastery"   element={<PrivateRoute><SubjectMastery /></PrivateRoute>} />
             <Route path="/revision"  element={<PrivateRoute><Revision /></PrivateRoute>} />
             <Route path="/formula-analytics" element={<PrivateRoute><FormulaAnalytics /></PrivateRoute>} />
+            <Route path="/mock-test" element={<PrivateRoute><Exam /></PrivateRoute>} />
+            <Route path="/mock-result/:attemptId" element={<PrivateRoute><NotFound /></PrivateRoute>} />
+            <Route path="/mock-review/:attemptId" element={<PrivateRoute><NotFound /></PrivateRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

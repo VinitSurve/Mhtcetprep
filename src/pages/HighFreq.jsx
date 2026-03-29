@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import ProgressBar from '../components/ProgressBar';
-import { fetchHighFreqQuestions, insertAttempt, insertSession } from '../lib/supabase';
+import { fetchHighFreqQuestions, fetchUserSeenQuestionIds, insertAttempt, insertSession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateId } from '../utils/helpers';
 
@@ -23,14 +23,41 @@ export default function HighFreq() {
   const startRef  = useRef(Date.now());
 
   useEffect(() => {
-    fetchHighFreqQuestions(100)
-      .then(qs => {
-        if (qs.length === 0) { setPhase('empty'); return; }
-        setQuestions(qs);
+    let cancelled = false;
+    (async () => {
+      try {
+        const seenIds = await fetchUserSeenQuestionIds(user?.id, 5000);
+        const qs = await fetchHighFreqQuestions(100, seenIds);
+        const uniq = [];
+        const seen = new Set();
+        for (const q of qs) {
+          if (!q || seen.has(q.id)) continue;
+          seen.add(q.id);
+          uniq.push(q);
+          if (uniq.length >= 100) break;
+        }
+        // If still short, reset cycle and backfill
+        if (uniq.length < 100) {
+          const refill = await fetchHighFreqQuestions(100, []);
+          for (const q of refill) {
+            if (!q || seen.has(q.id)) continue;
+            seen.add(q.id);
+            uniq.push(q);
+            if (uniq.length >= 100) break;
+          }
+        }
+        if (cancelled) return;
+        if (uniq.length === 0) { setPhase('empty'); return; }
+        setQuestions(uniq);
         setPhase('ready');
-      })
-      .catch(e => { setLoadError(e.message); setPhase('error'); });
-  }, []);
+      } catch (e) {
+        if (cancelled) return;
+        setLoadError(e.message);
+        setPhase('error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   const handleSubmit = () => {
     if (!selected) return;

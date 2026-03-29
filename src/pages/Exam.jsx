@@ -4,12 +4,13 @@ import QuestionCard from '../components/QuestionCard';
 import NavigationPanel from '../components/NavigationPanel';
 import ProgressBar from '../components/ProgressBar';
 import Timer from '../components/Timer';
-import { fetchQuestions, insertAttemptsBatch, insertSession } from '../lib/supabase';
+import { fetchQuestions, fetchUserSeenQuestionIds, insertAttemptsBatch, insertSession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateId, formatTime } from '../utils/helpers';
 
 const TOTAL_QUESTIONS = 100;
 const EXAM_DURATION   = 90 * 60; // 5400 seconds
+const SEEN_WINDOW     = 5000; // how many recent question ids to avoid repeating
 
 const SUBJECT_OPTIONS = [
   { value: '',                  label: 'All Subjects (Full CET)' },
@@ -41,14 +42,38 @@ export default function Exam() {
     setPhase('loading');
     setLoadError(null);
     try {
-      const qs = await fetchQuestions({ limit: TOTAL_QUESTIONS, subject: subject || undefined });
+      if (!user?.id) throw new Error('Sign in to start an exam.');
+
+      const seenIds = await fetchUserSeenQuestionIds(user.id, SEEN_WINDOW);
+      const unseenBatch = await fetchQuestions({
+        limit: TOTAL_QUESTIONS,
+        subject: subject || undefined,
+        excludeIds: seenIds,
+      });
+
+      let qs = unseenBatch;
+
+      // If we ran out of unseen questions, reset the cycle and backfill from the full pool.
+      if (qs.length < TOTAL_QUESTIONS) {
+        const refill = await fetchQuestions({ limit: TOTAL_QUESTIONS, subject: subject || undefined, excludeIds: [] });
+        const uniq = [];
+        const seen = new Set();
+        for (const row of [...qs, ...refill]) {
+          if (!row || seen.has(row.id)) continue;
+          seen.add(row.id);
+          uniq.push(row);
+          if (uniq.length >= TOTAL_QUESTIONS) break;
+        }
+        qs = uniq;
+      }
+
       if (qs.length === 0) throw new Error('No questions found — try a different subject filter');
       setQuestions(qs);
       setPhase('ready');
     } catch (e) {
       setLoadError(e.message);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => { loadQuestions(''); }, [loadQuestions]);
 

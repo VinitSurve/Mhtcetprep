@@ -17,7 +17,7 @@ const MODES = [
   { id:'revision', title:'Smart Revision',   subtitle:'Daily set from wrong, slow, and low-confidence questions', icon:'🧩', path:'/revision', accent:'#14b8a6', tag:'Daily 10-20' },
 ];
 
-export default function Home() {
+function Home() {
   const navigate = useNavigate();
   const { displayName } = useAuth();
   const [sessions, setSessions] = useState([]);
@@ -98,3 +98,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;

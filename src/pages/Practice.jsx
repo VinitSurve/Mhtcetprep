@@ -6,10 +6,12 @@ import Timer from '../components/Timer';
 import useAdaptiveEngine from '../hooks/useAdaptiveEngine';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  fetchOneQuestion, insertAttempt,
+  fetchOneQuestion, fetchUserSeenQuestionIds, insertAttempt,
   insertSession,
 } from '../lib/supabase';
 import { generateId, speedColor, speedLabel } from '../utils/helpers';
+
+const SEEN_WINDOW = 5000;
 
 const SUBJECTS = [
   { value: '',                  label: 'All Subjects' },
@@ -36,6 +38,7 @@ export default function Practice() {
   const [sessionStats, setSession]          = useState({ correct: 0, total: 0, time: 0 });
   const [lastResult, setLastResult]         = useState(null);
   const [subjectFilter, setSubjectFilter]   = useState('');
+  const [seenReady, setSeenReady]           = useState(false);
 
   const startTimeRef  = useRef(Date.now());
   const sessionIdRef  = useRef(generateId());
@@ -46,7 +49,28 @@ export default function Practice() {
     enabled: isAdaptive,
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!user?.id) {
+          seenIdsRef.current = [];
+          setSeenReady(true);
+          return;
+        }
+        const ids = await fetchUserSeenQuestionIds(user.id, SEEN_WINDOW);
+        if (!cancelled) seenIdsRef.current = ids;
+      } catch (_) {
+        if (!cancelled) seenIdsRef.current = [];
+      } finally {
+        if (!cancelled) setSeenReady(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const loadQuestion = useCallback(async () => {
+    if (!seenReady) return;
     setLoading(true);
     setError(null);
     setSelected(null);
@@ -62,16 +86,16 @@ export default function Practice() {
       if (!q) {
         throw new Error('No adaptive question found. Please retry.');
       }
-
-      seenIdsRef.current.push(q.id);
-      if (seenIdsRef.current.length >= 290) seenIdsRef.current = [];
+      if (q?.id) {
+        seenIdsRef.current = [...new Set([...seenIdsRef.current, q.id])].slice(-SEEN_WINDOW);
+      }
       setQuestion(q);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [isAdaptive, subjectFilter]);
+  }, [isAdaptive, subjectFilter, seenReady]);
 
   useEffect(() => { loadQuestion(); }, [loadQuestion]);
 

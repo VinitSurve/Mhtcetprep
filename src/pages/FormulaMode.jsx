@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import FormulaCard from '../components/FormulaCard';
-import { fetchFormulaGroups, insertAttempt, insertSession, upsertFormulaProgress } from '../lib/supabase';
+import { fetchFormulaGroups, fetchUserSeenQuestionIds, insertAttempt, insertSession, upsertFormulaProgress } from '../lib/supabase';
 import { generateId, speedColor, speedLabel } from '../utils/helpers';
 
 const MAX_Q_PER_FORMULA = 3;
@@ -15,6 +15,7 @@ export default function FormulaMode() {
   const sessionId = useRef(generateId());
   const startRef = useRef(Date.now());
   const sessionSavedRef = useRef(false);
+  const seenIdsRef = useRef(new Set());
 
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,10 @@ export default function FormulaMode() {
       try {
         const data = await fetchFormulaGroups();
         setGroups(data);
+        if (user?.id) {
+          const seen = await fetchUserSeenQuestionIds(user.id, 5000);
+          seenIdsRef.current = new Set(seen);
+        }
       } catch (e) {
         setError(e.message);
       } finally {
@@ -54,7 +59,9 @@ export default function FormulaMode() {
   }, [hasResult]);
 
   function startGroup(group) {
-    const questions = [...group.questions].sort(() => Math.random() - 0.5).slice(0, MAX_Q_PER_FORMULA);
+    const filtered = (group.questions || []).filter(q => !seenIdsRef.current.has(q.id));
+    const pool = (filtered.length ? filtered : group.questions || []).sort(() => Math.random() - 0.5);
+    const questions = pool.slice(0, MAX_Q_PER_FORMULA);
     setSelectedGroup(group);
     setQueue(questions);
     setCurrent(0);
