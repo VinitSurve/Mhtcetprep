@@ -9,7 +9,7 @@ import {
   fetchOneQuestion, fetchUserSeenQuestionIds, insertAttempt,
   insertSession,
 } from '../lib/supabase';
-import { generateId, speedColor, speedLabel } from '../utils/helpers';
+import { generateId, speedColor, speedLabel, isAnswerCorrect } from '../utils/helpers';
 
 const SEEN_WINDOW = 5000;
 
@@ -129,7 +129,7 @@ export default function Practice() {
   const handleModalSubmit = async ({ confidence, wasGuess, errorType }) => {
     setShowModal(false);
     const timeTaken  = Math.round((Date.now() - startTimeRef.current) / 1000);
-    const isCorrect  = selectedAnswer === question.correct_answer;
+    const isCorrect  = isAnswerCorrect(question, selectedAnswer);
     const speedRatio = timeTaken / (question.expected_time_sec || 60);
     setLastResult({ isCorrect, timeTaken, speedRatio });
     setSession(s => ({
@@ -280,7 +280,7 @@ export default function Practice() {
       </main>
 
       {showModal && (
-        <ConfidenceModal isCorrect={selectedAnswer === question?.correct_answer} onSubmit={handleModalSubmit} />
+        <ConfidenceModal isCorrect={isAnswerCorrect(question, selectedAnswer)} onSubmit={handleModalSubmit} />
       )}
     </div>
   );

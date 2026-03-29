@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QuestionCard from '../components/QuestionCard';
 import { fetchUnseenQuestions, insertAttempt, insertSession } from '../lib/supabase';
+import { isAnswerCorrect } from '../utils/helpers';
 import { useAuth } from '../contexts/AuthContext';
 import { generateId } from '../utils/helpers';
 
@@ -47,7 +48,7 @@ export default function SpeedMode() {
     clearInterval(timerRef.current);
     const q         = questions[current];
     const sel       = autoSkipped ? null : selectedRef.current;
-    const isCorrect = sel === q?.correct_answer;
+    const isCorrect = isAnswerCorrect(q || {}, sel);
     const actualTime = autoSkipped
       ? TIME_PER_Q
       : Math.round((Date.now() - startRef.current) / 1000);

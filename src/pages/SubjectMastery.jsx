@@ -6,6 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import ConfidenceModal from '../components/ConfidenceModal';
 import Timer from '../components/Timer';
 import { fetchRecentAttempts, fetchUnseenQuestions, insertAttempt, insertSession } from '../lib/supabase';
+import { isAnswerCorrect } from '../utils/helpers';
 import { buildSubjectMasteryPool } from '../utils/adaptiveEngine';
 import { generateId } from '../utils/helpers';
 
@@ -109,7 +110,7 @@ export default function SubjectMastery() {
     setShowModal(false);
 
     const timeTaken = Math.round((Date.now() - startRef.current) / 1000);
-    const isCorrect = selected === currentQ.correct_answer;
+    const isCorrect = isAnswerCorrect(currentQ, selected);
 
     setResults((prev) => [...prev, { isCorrect, timeTaken, topic: currentQ.topic }]);
 
@@ -301,7 +302,7 @@ export default function SubjectMastery() {
 
       {showModal && (
         <ConfidenceModal
-          isCorrect={selected === currentQ?.correct_answer}
+          isCorrect={isAnswerCorrect(currentQ, selected)}
           onSubmit={handleMetaSubmit}
         />
       )}

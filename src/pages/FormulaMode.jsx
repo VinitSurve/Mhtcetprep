@@ -5,6 +5,7 @@ import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import FormulaCard from '../components/FormulaCard';
 import { fetchFormulaGroups, fetchUserSeenQuestionIds, insertAttempt, insertSession, upsertFormulaProgress } from '../lib/supabase';
+import { isAnswerCorrect } from '../utils/helpers';
 import { generateId, speedColor, speedLabel } from '../utils/helpers';
 
 const MAX_Q_PER_FORMULA = 3;
@@ -78,7 +79,7 @@ export default function FormulaMode() {
     setShowModal(false);
 
     const timeTaken = Math.round((Date.now() - startRef.current) / 1000);
-    const isCorrect = selected === currentQ.correct_answer;
+    const isCorrect = isAnswerCorrect(currentQ, selected);
     const speedRatio = timeTaken / (currentQ.expected_time_sec || 60);
 
     setLastResult({ isCorrect, timeTaken, speedRatio });
@@ -296,7 +297,7 @@ export default function FormulaMode() {
 
       {showModal && (
         <ConfidenceModal
-          isCorrect={selected === currentQ?.correct_answer}
+          isCorrect={isAnswerCorrect(currentQ, selected)}
           onSubmit={handleSubmitMeta}
         />
       )}

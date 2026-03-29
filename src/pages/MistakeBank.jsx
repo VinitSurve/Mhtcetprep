@@ -4,7 +4,7 @@ import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import { fetchMistakeQuestions, insertAttempt, insertSession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { generateId } from '../utils/helpers';
+import { generateId, isAnswerCorrect } from '../utils/helpers';
 
 export default function MistakeBank() {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export default function MistakeBank() {
     setShowModal(false);
     const q         = questions[current];
     const timeTaken = Math.round((Date.now() - startRef.current) / 1000);
-    const isCorrect = selected === q.correct_answer;
+    const isCorrect = isAnswerCorrect(q, selected);
 
     setResults(prev => [...prev, { isCorrect, topic: q.topic }]);
 
@@ -205,7 +205,7 @@ export default function MistakeBank() {
 
       {showModal && (
         <ConfidenceModal
-          isCorrect={selected === q?.correct_answer}
+          isCorrect={isAnswerCorrect(q, selected)}
           onSubmit={handleModalSubmit}
         />
       )}

@@ -97,3 +97,22 @@ export function subjectColor(subject) {
   };
   return map[subject] || '#94a3b8';
 }
+
+/** Normalize correctness when correct_answer may be a key (A/B/C/D) or option text */
+export function isAnswerCorrect(question, selectedKey) {
+  if (!question || selectedKey == null) return false;
+  const correctRaw = (question.correct_answer ?? '').toString().trim();
+  const opts = question.options || {};
+
+  // Direct match on key
+  if (selectedKey === correctRaw) return true;
+
+  // Match when correct answer is the option text
+  const selectedVal = opts[selectedKey];
+  if (selectedVal && selectedVal.toString().trim() === correctRaw) return true;
+
+  // If correctRaw is a key and its value equals the selected key's value
+  if (opts[correctRaw] && opts[correctRaw].toString().trim() === selectedVal?.toString().trim()) return true;
+
+  return false;
+}

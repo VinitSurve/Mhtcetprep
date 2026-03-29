@@ -6,7 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import Timer from '../components/Timer';
 import { fetchQuestions, fetchUserSeenQuestionIds, insertAttemptsBatch, insertSession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { generateId, formatTime } from '../utils/helpers';
+import { generateId, formatTime, isAnswerCorrect } from '../utils/helpers';
 
 const TOTAL_QUESTIONS = 100;
 const EXAM_DURATION   = 90 * 60; // 5400 seconds
@@ -127,7 +127,7 @@ export default function Exam() {
     for (let i = 0; i < questions.length; i++) {
       const q   = questions[i];
       const sel = answers[i] ?? null;
-      const isCorrect = sel === q.correct_answer;
+      const isCorrect = isAnswerCorrect(q, sel);
       const timeSec   = qStartTimes.current[`time_${i}`] || 0;
 
       if (isCorrect) correct++;

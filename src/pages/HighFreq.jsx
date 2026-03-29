@@ -4,6 +4,7 @@ import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import ProgressBar from '../components/ProgressBar';
 import { fetchHighFreqQuestions, fetchUserSeenQuestionIds, insertAttempt, insertSession } from '../lib/supabase';
+import { isAnswerCorrect } from '../utils/helpers';
 import { useAuth } from '../contexts/AuthContext';
 import { generateId } from '../utils/helpers';
 
@@ -69,7 +70,7 @@ export default function HighFreq() {
     setShowModal(false);
     const q         = questions[current];
     const timeTaken = Math.round((Date.now() - startRef.current) / 1000);
-    const isCorrect = selected === q.correct_answer;
+    const isCorrect = isAnswerCorrect(q, selected);
     setResults(prev => [...prev, { isCorrect, topic: q.topic }]);
     try {
       await insertAttempt({
@@ -242,7 +243,7 @@ export default function HighFreq() {
 
       {showModal && (
         <ConfidenceModal
-          isCorrect={selected === q?.correct_answer}
+          isCorrect={isAnswerCorrect(q, selected)}
           onSubmit={handleModalSubmit}
         />
       )}

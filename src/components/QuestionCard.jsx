@@ -1,4 +1,4 @@
-import { difficultyClass, subjectAcronym, subjectColor } from '../utils/helpers';
+import { difficultyClass, subjectAcronym, subjectColor, isAnswerCorrect } from '../utils/helpers';
 
 /**
  * QuestionCard
@@ -41,9 +41,10 @@ export default function QuestionCard({
       return base + 'border-cet-border bg-cet-panel hover:border-cet-accent/50 hover:bg-cet-accent/5 text-cet-text cursor-pointer';
     }
     // Revealed state
-    if (key === question.correct_answer)
+    const correct = isAnswerCorrect(question, key);
+    if (correct)
       return base + 'border-cet-green bg-cet-green/10 text-cet-green';
-    if (key === selectedAnswer && key !== question.correct_answer)
+    if (key === selectedAnswer && !correct)
       return base + 'border-cet-red bg-cet-red/10 text-cet-red';
     return base + 'border-cet-border bg-cet-panel text-cet-dim opacity-50';
   };

@@ -5,6 +5,7 @@ import QuestionCard from '../components/QuestionCard';
 import ConfidenceModal from '../components/ConfidenceModal';
 import RevisionCard from '../components/RevisionCard';
 import { fetchQuestionsByIds, fetchRevisionSignals, insertAttempt, insertSession } from '../lib/supabase';
+import { isAnswerCorrect } from '../utils/helpers';
 import { generateRevisionSet } from '../utils/adaptiveEngine';
 import { generateId } from '../utils/helpers';
 
@@ -86,7 +87,7 @@ export default function Revision() {
     setShowModal(false);
 
     const timeTaken = Math.round((Date.now() - startRef.current) / 1000);
-    const isCorrect = selected === currentQuestion.correct_answer;
+    const isCorrect = isAnswerCorrect(currentQuestion, selected);
 
     setResults((prev) => [...prev, {
       isCorrect,
@@ -301,7 +302,7 @@ export default function Revision() {
 
       {showModal && (
         <ConfidenceModal
-          isCorrect={selected === currentQuestion?.correct_answer}
+          isCorrect={isAnswerCorrect(currentQuestion, selected)}
           onSubmit={handleMetaSubmit}
         />
       )}
